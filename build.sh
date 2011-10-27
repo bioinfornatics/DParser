@@ -37,8 +37,8 @@ VERBOSE=0
 SHARED_LIB=1
 LIBDIR="lib"
 LIBDIR_PATH=""
-DOCDIR_PATH="../usr/doc/libDParser"
-INCLUDEDIR="../usr/include/d"
+DOCDIR_PATH="../usr/share/doc/libDParser"
+INCLUDEDIR="../usr/include/d/DParser"
 DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
 while getopts “hvqscl” OPTION
@@ -71,7 +71,6 @@ do
 done
 
 LIBDIR_PATH="../usr/${LIBDIR}"
-DOCDIR_PATH="../usr/share/doc/libDParser"
 
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mEntering is source directory\033[0;0m"
@@ -127,19 +126,19 @@ fi
 case ${DC} in
     ldc | ldc2)
         if [[ $SHARED_LIB -eq 1 ]]; then
-            llvm-ld -link-as-library -o libDparser.bc -lm -ldl -lrt -soname=Dparser *.bc;
-            llc -relocation-model=pic libDparser.bc;
-            gcc -shared libDparser.s -o ${LIBDIR_PATH}/libDparser-${COMPILER}.so;
+            llvm-ld -link-as-library -o libDParser.bc -lm -ldl -lrt -soname=Dparser *.bc;
+            llc -relocation-model=pic libDParser.bc;
+            gcc -shared libDParser.s -o ${LIBDIR_PATH}/libDParser-${COMPILER}.so;
         else
-            ar rcs ${LIBDIR_PATH}/libDparser-${COMPILER}.a *.o
-            ranlib ${LIBDIR_PATH}/libDparser-${COMPILER}.a
+            ar rcs ${LIBDIR_PATH}/libDParser-${COMPILER}.a *.o
+            ranlib ${LIBDIR_PATH}/libDParser-${COMPILER}.a
         fi
         ;;
     gdmd | dmd)
         if [[ $SHARED_LIB -eq 1 ]]; then
             echo "not supported"
         else
-            ${DC} -link *.o -of ${LIBDIR_PATH}/libDparser-${COMPILER}.a
+            ${DC} -link *.o -of ${LIBDIR_PATH}/libDParser-${COMPILER}.a
         fi
         ;;
     ?)
