@@ -15,11 +15,11 @@ private import std.stdio    : writeln, writefln, writef;
  * --------------------
  * import configFile;
  * string filePath  = "~/myGreatSetup.conf";
- * Section sections = configFile.parse( filePath );
+ * Section sections = configFile.open( filePath );
  * --------------------
  */
 
-ConfigFile parse( string filePath ){
+ConfigFile open( string filePath ){
     Section         root            = new Section("root", 0);           // root section
     Section         currentSection  = root;                             // reference to current section
     Section         nextSection     = null;
