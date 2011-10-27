@@ -32,6 +32,7 @@ EOF
 }
 
 DC=ldc2
+COMPILER="ldc"
 VERBOSE=0
 SHARED_LIB=1
 LIBDIR="lib"
@@ -88,9 +89,11 @@ case ${DC} in
         fi
         ;;
     gdc)
+        COMPILER="gdc"
         DC="gdmd"
         ;;
-    gdmd | dmd)
+    dmd)
+        COMPILER="dmd"
         if [[ $SHARED_LIB -eq 1 ]]; then
             #DFLAGS="${DFLAGS} -fPIC"
             echo "Currently dmd do not support shared lib!"
@@ -126,17 +129,17 @@ case ${DC} in
         if [[ $SHARED_LIB -eq 1 ]]; then
             llvm-ld -link-as-library -o libDparser.bc -lm -ldl -lrt -soname=Dparser *.bc;
             llc -relocation-model=pic libDparser.bc;
-            gcc -shared libDparser.s -o ${LIBDIR_PATH}/libDparser.so;
+            gcc -shared libDparser.s -o ${LIBDIR_PATH}/libDparser-${COMPILER}.so;
         else
-            ar rcs ${LIBDIR_PATH}/libDparser.a *.o
-            ranlib ${LIBDIR_PATH}/libDparser.a
+            ar rcs ${LIBDIR_PATH}/libDparser-${COMPILER}.a *.o
+            ranlib ${LIBDIR_PATH}/libDparser-${COMPILER}.a
         fi
         ;;
     gdmd | dmd)
         if [[ $SHARED_LIB -eq 1 ]]; then
             echo "not supported"
         else
-            ${DC} -link *.o -of ${LIBDIR_PATH}/libDparser.a
+            ${DC} -link *.o -of ${LIBDIR_PATH}/libDparser-${COMPILER}.a
         fi
         ;;
     ?)
