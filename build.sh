@@ -71,7 +71,7 @@ do
 done
 
 LIBDIR_PATH="../usr/${LIBDIR}"
-DOCDIR_PATH="../usr/doc/libDParser"
+DOCDIR_PATH="../usr/share/doc/libDParser"
 
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mEntering is source directory\033[0;0m"
