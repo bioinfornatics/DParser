@@ -1,0 +1,12 @@
+BUILD
+------
+run build.sh script as
+$ ./build.sh
+
+use -h paramter for more info
+$ ./build.sh -h
+
+INSATLL
+-------
+It is quite easy after building just copy:
+$ su -c 'cp -r install/* /'
