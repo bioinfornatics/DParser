@@ -45,7 +45,7 @@ DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/libDParser"
 INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/DParser"
 DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
-while getopts “hvqscl” OPTION
+while getopts “hvqscl:p:” OPTION
 do
     case $OPTION in
         h)
@@ -94,7 +94,7 @@ case ${DC} in
             DFLAGS="${DFLAGS} --output-bc -relocation-model=pic"
         fi
         ;;
-    gdc)
+    gdmd | gdc)
         COMPILER="gdc"
         DC="gdmd"
         ;;
@@ -136,6 +136,7 @@ case ${DC} in
             llvm-ld -link-as-library -o libDParser.bc -lm -ldl -lrt -soname=Dparser *.bc;
             llc -relocation-model=pic libDParser.bc;
             gcc -shared libDParser.s -o ${LIBDIR_PATH}/libDParser-${COMPILER}.so;
+            rm *.bc
         else
             ar rcs ${LIBDIR_PATH}/libDParser-${COMPILER}.a *.o
             ranlib ${LIBDIR_PATH}/libDParser-${COMPILER}.a
