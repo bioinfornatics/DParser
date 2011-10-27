@@ -26,8 +26,10 @@ OPTIONS:
     -h      Show this message
     -v      Verbose could be use twice time as -v -v for increase verbosity
     -q      No verbosity
-    -s      Install static lib instead shared lib
+    -s      Build static lib instead shared lib
     -c      Set compiler default ldc2
+    -l      Set lib dir default lib
+    -p      Set prefix default /usr/local
 EOF
 }
 
@@ -35,10 +37,11 @@ DC=ldc2
 COMPILER="ldc"
 VERBOSE=0
 SHARED_LIB=1
+PREFIX="/usr/local"
 LIBDIR="lib"
 LIBDIR_PATH=""
-DOCDIR_PATH="../usr/share/doc/libDParser"
-INCLUDEDIR="../usr/include/d/DParser"
+DOCDIR_PATH="..${PREFIX}/share/doc/libDParser"
+INCLUDEDIR="..${PREFIX}/include/d/DParser"
 DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
 while getopts “hvqscl” OPTION
@@ -63,6 +66,9 @@ do
         l)
             LIBDIR=$OPTARG
             ;;
+        p)
+            PREFIX=$OPTARG
+            ;;
         ?)
             usage
             exit 1
@@ -70,7 +76,7 @@ do
     esac
 done
 
-LIBDIR_PATH="../usr/${LIBDIR}"
+LIBDIR_PATH="..${PREFIX}/${LIBDIR}"
 
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mEntering is source directory\033[0;0m"
