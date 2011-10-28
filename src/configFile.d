@@ -51,12 +51,12 @@ ConfigFile open( string filePath ){
             else if( line[0] == '[' ){                                  // section start
                 nextSection = getSection( cast(string)line );           // get newest section
                 debug writefln( "  current: %s-%s | next: %s-%s", currentSection.name, currentSection.level , nextSection.name, nextSection.level );
-                if( currentSection.level < nextSection.level ){         // add a child to current section
-                    currentSection.addChild( nextSection );
+                if( currentSection.level < nextSection.level ){         // currentSection.level < nextSection.level
+                    currentSection.addChild( nextSection );             // add a child to current section
                     currentSection = nextSection;                       // now current section go to next one
                 }
-                else{
-                    if( currentSection.parent !is null ){
+                else if( currentSection.level == nextSection.level ){   // currentSection.level = nextSection.level
+                    if( currentSection.level > 1 ){                     // currentSection.level > 1
                         debug writefln( "  parent:  %s-%s", currentSection.parent.name, currentSection.parent.level );
                         currentSection = currentSection.rewind( currentSection.parent.level );
                         debug writefln( "  current: %s-%s | next: %s-%s", currentSection.name, currentSection.level , nextSection.name, nextSection.level );
@@ -64,10 +64,15 @@ ConfigFile open( string filePath ){
                         currentSection.addChild( nextSection );
                         currentSection = nextSection;
                     }
-                    else{
-                        currentSection.addChild( nextSection );
+                    else{                                               // currentSection.level = 1
+                        root.addChild( nextSection );
                         currentSection = nextSection;
                     }
+                }
+                else{                                                   // currentSection.level > nextSection.level
+                    currentSection = currentSection.rewind( nextSection.level - 1);
+                    currentSection.addChild( nextSection );
+                    currentSection = nextSection;
                 }
             }
             else{                                                       // read information corresponding to a section

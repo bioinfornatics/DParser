@@ -26,6 +26,7 @@ OPTIONS:
     -h      Show this message
     -v      Verbose could be use twice time as -v -v for increase verbosity
     -q      No verbosity
+    -f      Add flag to DFLAGS
     -s      Build static lib instead shared lib
     -c      Set compiler default ldc2
     -l      Set lib dir default lib
@@ -45,15 +46,24 @@ DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/libDParser"
 INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/DParser"
 DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
-while getopts “hvqscl:p:” OPTION
+while getopts “hvqscf:l:p:” OPTION
 do
     case $OPTION in
+        c)
+            DC=$OPTARG
+            ;;
         h)
             usage
             exit 1
             ;;
-        v)
-            let VERBOSE++
+        f)
+            DFLAGS="${DFLAGS} $OPTARG"
+            ;;
+        l)
+            LIBDIR=$OPTARG
+            ;;
+        p)
+            PREFIX=$OPTARG
             ;;
         q)
             VERBOSE=0
@@ -61,14 +71,8 @@ do
         s)
             SHARED_LIB=0
             ;;
-        c)
-            DC=$OPTARG
-            ;;
-        l)
-            LIBDIR=$OPTARG
-            ;;
-        p)
-            PREFIX=$OPTARG
+        v)
+            let VERBOSE++
             ;;
         ?)
             usage
@@ -136,7 +140,9 @@ case ${DC} in
             llvm-ld -link-as-library -o libDParser.bc -lm -ldl -lrt -soname=Dparser *.bc;
             llc -relocation-model=pic libDParser.bc;
             gcc -shared libDParser.s -o ${LIBDIR_PATH}/libDParser-${COMPILER}.so;
-            rm *.bc
+            if [ -e libDParser.bc ]; then
+                rm *.bc
+            fi
         else
             ar rcs ${LIBDIR_PATH}/libDParser-${COMPILER}.a *.o
             ranlib ${LIBDIR_PATH}/libDParser-${COMPILER}.a
