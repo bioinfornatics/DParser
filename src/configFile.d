@@ -17,10 +17,11 @@ This file is part of DParser.
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-private import std.stream   : BufferedFile;
-private import std.string   : format, stripLeft, stripRight;
-private import std.array    : split;
-private import std.stdio    : writeln, writefln, writef;
+private import std.stream       : BufferedFile;
+private import std.string       : format, stripLeft, stripRight;
+private import std.array        : split;
+private import std.stdio        : writeln, writefln, writef;
+private import std.exception    : Exception;
 
 
 /**
@@ -56,21 +57,14 @@ ConfigFile open( string filePath ){
                     currentSection = nextSection;                       // now current section go to next one
                 }
                 else if( currentSection.level == nextSection.level ){   // currentSection.level = nextSection.level
-                    if( currentSection.level > 1 ){                     // currentSection.level > 1
-                        debug writefln( "  parent:  %s-%s", currentSection.parent.name, currentSection.parent.level );
-                        currentSection = currentSection.rewind( currentSection.parent.level );
-                        debug writefln( "  current: %s-%s | next: %s-%s", currentSection.name, currentSection.level , nextSection.name, nextSection.level );
-                        debug writefln( "  parent:  %s-%s", currentSection.parent.name, currentSection.parent.level );
-                        currentSection.addChild( nextSection );
-                        currentSection = nextSection;
-                    }
-                    else{                                               // currentSection.level = 1
-                        root.addChild( nextSection );
-                        currentSection = nextSection;
-                    }
+                    currentSection = currentSection.rewind( currentSection.parent.level );
+                    debug writefln( "    current: %s-%s | next: %s-%s", currentSection.name, currentSection.level , nextSection.name, nextSection.level );
+                    currentSection.addChild( nextSection );
+                    currentSection = nextSection;
                 }
                 else{                                                   // currentSection.level > nextSection.level
                     currentSection = currentSection.rewind( nextSection.level - 1);
+                    debug writefln( "    current: %s-%s | next: %s-%s", currentSection.name, currentSection.level , nextSection.name, nextSection.level );
                     currentSection.addChild( nextSection );
                     currentSection = nextSection;
                 }
@@ -112,7 +106,7 @@ class Section{
         this(string name, size_t level){
             this._name           = name;
             this._level          = level;
-            this._childs         = [];                                 // start with a length 5 for not resize 1 by 1
+            this._childs         = [];
             this._numberOfChild  = 0;
             this._dict           = null;
         }
@@ -131,6 +125,7 @@ class Section{
             this._numberOfChild  = numberOfChild;
             this._dict           = dict;
         }
+
         /**
          * addChild is used for add a subsection to current section
          *
@@ -154,7 +149,7 @@ class Section{
         }
 
         /**
-         * getreturn the subsection where name equal name given
+         * get return the subsection where name equal name given
          *
          * Params: name
          *
@@ -182,7 +177,7 @@ class Section{
         }
 
         void opIndexAssign( string  value, string key ){
-            debug writefln("key: %s value: %s", key, value);
+            debug writefln("+ key: %s | value: %s", key, value);
             _dict[key.idup] = value.idup;
         }
 
@@ -191,16 +186,18 @@ class Section{
          *
          * Params: level
          */
-        Section rewind( size_t level ){                            // rewind to parent level x
+        Section rewind( size_t levelToGo ){                            // rewind to parent level x
             Section section     = null;
-            size_t rewindLevel  = 0;
-            if( _parent !is null ){
-                while( rewindLevel != level ){
-                    section     = _parent;
-                    rewindLevel = section.level;
-                    debug writefln( "Rewind name: %s-%s", section.name, rewindLevel );
-                }
+            debug{
+                if( _parent !is null ) writefln( "+ Rewind parent of %s-%s: %s-%s", _name, _level, _parent.name, _parent.level );
+                else writefln( "+ Rewind no prent, current section: %s-%s", _name, _level,);
             }
+            if( _level == levelToGo)
+                section = this;
+            else if( _level >= levelToGo)
+                section = _parent.rewind( levelToGo );
+            else
+                throw new Exception("You try to go back when current section is lower where level you want to go!");
             return section;
         }
 
