@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This file is part of DParser.
+# This file is part of ${PROJECTNAME}.
 #
 #    Foobar is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ OPTIONS:
     -p      Set prefix default /usr/local
 EOF
 }
-
+PROJECTNAME="DParser"
 DC=ldc2
 COMPILER="ldc"
 VERBOSE=0
@@ -42,8 +42,8 @@ PREFIX="/usr/local"
 LIBDIR="lib"
 DESTDIR="../install"
 LIBDIR_PATH=""
-DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/libDParser"
-INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/DParser"
+DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/lib${PROJECTNAME}"
+INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/${PROJECTNAME}"
 DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
 while getopts “hvqscf:l:p:” OPTION
@@ -137,22 +137,22 @@ fi
 case ${DC} in
     ldc | ldc2)
         if [[ $SHARED_LIB -eq 1 ]]; then
-            llvm-ld -link-as-library -o libDParser.bc -lm -ldl -lrt -soname=Dparser *.bc;
-            llc -relocation-model=pic libDParser.bc;
-            gcc -shared libDParser.s -o ${LIBDIR_PATH}/libDParser-${COMPILER}.so;
-            if [ -e libDParser.bc ]; then
+            llvm-ld -link-as-library -o lib${PROJECTNAME}.bc -lm -ldl -lrt -soname=${PROJECTNAME} *.bc;
+            llc -relocation-model=pic lib${PROJECTNAME}.bc;
+            gcc -shared lib${PROJECTNAME}.s -o ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.so;
+            if [ -e lib${PROJECTNAME}.bc ]; then
                 rm *.bc
             fi
         else
-            ar rcs ${LIBDIR_PATH}/libDParser-${COMPILER}.a *.o
-            ranlib ${LIBDIR_PATH}/libDParser-${COMPILER}.a
+            ar rcs ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a *.o
+            ranlib ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a
         fi
         ;;
     gdmd | dmd)
         if [[ $SHARED_LIB -eq 1 ]]; then
             echo "not supported"
         else
-            ${DC} -link *.o -of ${LIBDIR_PATH}/libDParser-${COMPILER}.a
+            ${DC} -link *.o -of ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a
         fi
         ;;
     ?)
