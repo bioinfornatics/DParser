@@ -15,6 +15,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
+function fail(){
+    local position=$1
+    echo "Build fail during: ${position}"
+    exit 1
+}
 
 function usage(){
 cat << EOF
@@ -35,16 +40,14 @@ EOF
 }
 PROJECTNAME="DParser"
 DC=ldc2
-COMPILER="ldc"
+COMPILER="ldc2"
 VERBOSE=0
 SHARED_LIB=1
 PREFIX="/usr/local"
 LIBDIR="lib"
 DESTDIR="../install"
 LIBDIR_PATH=""
-DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/lib${PROJECTNAME}"
-INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/${PROJECTNAME}"
-DFLAGS="-w -g -op -c -od../build -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
+DFLAGS="-w -g -op -c -od../build"
 
 while getopts “hvqscf:l:p:” OPTION
 do
@@ -82,6 +85,9 @@ do
 done
 
 LIBDIR_PATH="${DESTDIR}/${PREFIX}/${LIBDIR}"
+DOCDIR_PATH="${DESTDIR}/${PREFIX}/share/doc/${PROJECTNAME}"
+INCLUDEDIR="${DESTDIR}/${PREFIX}/include/d/${PROJECTNAME}"
+DFLAGS="${DFLAGS} -Dd${DOCDIR_PATH} -Hd${INCLUDEDIR}"
 
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mEntering is source directory\033[0;0m"
@@ -93,6 +99,7 @@ if [[ $VERBOSE -ge 1 ]]; then
 fi
 case ${DC} in
     ldc | ldc2)
+        COMPILER="ldc"
         DFLAGS="${DFLAGS} --output-o"
         if [[ $SHARED_LIB -eq 1 ]]; then
             DFLAGS="${DFLAGS} --output-bc -relocation-model=pic"
@@ -121,7 +128,13 @@ esac
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mCompile ...\033[0;0m"
 fi
-${DC} ${DFLAGS} *.d
+if [[ $VERBOSE -ge 2 ]]; then
+    echo -e "\033[33m${DC} ${DFLAGS} *.d\033[0;0m"
+fi
+${DC} ${DFLAGS} $(find . -name "*.d")
+if [[ $? -ge 1 ]]; then
+    fail "Build"
+fi
 #############################################################
 if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mEntering is build directory\033[0;0m"
@@ -132,27 +145,69 @@ if [[ $VERBOSE -ge 1 ]]; then
     echo -e "\033[31mLinking ...\033[0;0m"
 fi
 if [ ! -e "${LIBDIR_PATH}" ]; then
-    mkdir ${LIBDIR_PATH}
+    mkdir -p ${LIBDIR_PATH}
+fi
+if [[ $? -ge 1 ]]; then
+    fail "mkdir ${LIBDIR_PATH}"
 fi
 case ${DC} in
     ldc | ldc2)
         if [[ $SHARED_LIB -eq 1 ]]; then
-            llvm-ld -link-as-library -o lib${PROJECTNAME}.bc -lm -ldl -lrt -soname=${PROJECTNAME} *.bc;
-            llc -relocation-model=pic lib${PROJECTNAME}.bc;
-            gcc -shared lib${PROJECTNAME}.s -o ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.so;
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "\033[33mllvm-ld -link-as-library -o lib${PROJECTNAME}.bc -lm -ldl -lrt -soname=${PROJECTNAME} *.bc\033[0;0m"
+            fi
+            llvm-ld -link-as-library -o lib${PROJECTNAME}.bc -lm -ldl -lrt -soname=${PROJECTNAME}  $(find . -name "*.bc")
+            if [[ $? -ge 1 ]]; then
+                fail "llvm-ld"
+            fi
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "\033[33mllc -relocation-model=pic lib${PROJECTNAME}.bc\033[0;0m"
+            fi
+            llc -relocation-model=pic lib${PROJECTNAME}.bc
+            if [[ $? -ge 1 ]]; then
+                fail "llc"
+            fi
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "\033[33mgcc -shared lib${PROJECTNAME}.s -o ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.so\033[0;0m"
+            fi
+            gcc -shared -Wl,-soname,lib${PROJECTNAME}-${COMPILER}.so lib${PROJECTNAME}.s -o ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.so
+            if [[ $? -ge 1 ]]; then
+                fail "gcc"
+            fi
             if [ -e lib${PROJECTNAME}.bc ]; then
                 rm *.bc
             fi
+            if [[ $? -ge 1 ]]; then
+                fail "rm *.bc"
+            fi
         else
-            ar rcs ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a *.o
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "ar rcs ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a *.o"
+            fi
+            ar rcs ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a  $(find . -name "*.o")
+            if [[ $? -ge 1 ]]; then
+                fail "ar"
+            fi
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "{LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a"
+            fi
             ranlib ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a
+            if [[ $? -ge 1 ]]; then
+                fail "ranlib"
+            fi
         fi
         ;;
     gdmd | dmd)
         if [[ $SHARED_LIB -eq 1 ]]; then
             echo "not supported"
         else
-            ${DC} -link *.o -of ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a
+            if [[ $VERBOSE -ge 2 ]]; then
+                echo -e "${DC} -link *.o -of ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a"
+            fi
+            ${DC} -link  $(find . -name "*.o") -of ${LIBDIR_PATH}/lib${PROJECTNAME}-${COMPILER}.a
+            if [[ $? -ge 1 ]]; then
+                fail "${DC} -link"
+            fi
         fi
         ;;
     ?)
